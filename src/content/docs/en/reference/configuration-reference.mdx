@@ -362,7 +362,7 @@ Using `'attribute'` is useful when you are manipulating the `class` attribute of
 
 <p>
 
-**Type:** `boolean`<br />
+**Type:** `object`<br />
 **Default:** `{}`<br />
 <Since v="4.9.0" />
 </p>
@@ -386,7 +386,7 @@ export default defineConfig({
 <p>
 
 **Type:** `boolean`<br />
-**Default:** 'false'<br />
+**Default:** `false`<br />
 <Since v="4.9.0" />
 </p>
 
@@ -406,7 +406,7 @@ If the "origin" header doesn't match the `pathname` of the request, Astro will r
 
 Pass additional configuration options to Vite. Useful when Astro doesn't support some advanced configuration that you may need.
 
-View the full `vite` configuration object documentation on [vitejs.dev](https://vitejs.dev/config/).
+View the full `vite` configuration object documentation on [vite.dev](https://vite.dev/config/).
 
 #### Examples
 
@@ -637,10 +637,38 @@ Control whether project styles are sent to the browser in a separate css file or
 ```js
 {
 	build: {
-		inlineStylesheets: `never`,
+		inlineStylesheets: 'never',
 	},
 }
 ```
+
+### build.concurrency
+
+<p>
+
+**Type:** `number`<br />
+**Default:** `1`<br />
+<Since v="4.16.0" />
+</p>
+
+The number of pages to build in parallel.
+
+**In most cases, you should not change the default value of `1`.**
+
+Use this option only when other attempts to reduce the overall rendering time (e.g. batch or cache long running tasks like fetch calls or data access) are not possible or are insufficient.
+If the number is set too high, page rendering may slow down due to insufficient memory resources and because JS is single-threaded.
+
+```js
+{
+  build: {
+    concurrency: 2
+  }
+}
+```
+
+ :::caution[Breaking changes possible]
+ This feature is stable and is not considered experimental. However, this feature is only intended to address difficult performance issues, and breaking changes may occur in a [minor release](/en/upgrade-astro/#semantic-versioning) to keep this option as performant as possible. Please check the [Astro CHANGELOG](https://github.com/withastro/astro/blob/refs/heads/next/packages/astro/CHANGELOG.md) for every minor release if you are using this feature.
+ :::
 
 ## Server Options
 
@@ -648,7 +676,7 @@ Customize the Astro dev server, used by both `astro dev` and `astro preview`.
 
 ```js
 {
-  server: { port: 1234, host: true}
+  server: { port: 1234, host: true }
 }
 ```
 
@@ -874,7 +902,7 @@ Set `false` to bypass the default image size limit for the Sharp image service a
 <p>
 
 **Type:** `Array.<string>`<br />
-**Default:** `{domains: []}`<br />
+**Default:** `[]`<br />
 <Since v="2.10.10" />
 </p>
 
@@ -922,6 +950,7 @@ Defines a list of permitted image source URL patterns for remote image optimizat
 ```
 
 You can use wildcards to define the permitted `hostname` and `pathname` values as described below. Otherwise, only the exact values provided will be configured:
+
 `hostname`:
   - Start with '**.' to allow all subdomains ('endsWith').
   - Start with '*.' to allow only one level of subdomain.
@@ -977,7 +1006,7 @@ Pass [remark plugins](https://github.com/remarkjs/remark) to customize how your 
 import remarkToc from 'remark-toc';
 {
   markdown: {
-    remarkPlugins: [ [remarkToc, { heading: "contents"} ] ]
+    remarkPlugins: [ [remarkToc, { heading: "contents" }] ]
   }
 }
 ```
@@ -1051,7 +1080,7 @@ Pass options to [remark-rehype](https://github.com/remarkjs/remark-rehype#api).
 {
   markdown: {
     // Example: Translate the footnotes text to another language, here are the default English values
-    remarkRehype: { footnoteLabel: "Footnotes", footnoteBackLabel: "Back to reference 1"},
+    remarkRehype: { footnoteLabel: "Footnotes", footnoteBackLabel: "Back to reference 1" },
   },
 };
 ```
@@ -1204,7 +1233,7 @@ By default, Astro's i18n routing creates pages that redirect your visitors to a 
 
 When `i18n.routing.fallback: "rewrite"` is configured, Astro will create pages that render the contents of the fallback page on the original, requested URL.
 
-With the following configuration, if you have the file `src/pages/en/about.astro` but not `src/pages/fr/about.astro`, the `astro build` command will generate `dist/fr/about.html` with the same content as the `dist/en/index.html` page.
+With the following configuration, if you have the file `src/pages/en/about.astro` but not `src/pages/fr/about.astro`, the `astro build` command will generate `dist/fr/about.html` with the same content as the `dist/en/about.html` page.
 Your site visitor will see the English version of the page at `https://example.com/fr/about/` and will not be redirected.
 
 ```js
@@ -1541,7 +1570,7 @@ import Avatar from '~/components/Avatar.astro';
 
 The outer page will be rendered, either at build time (`hybrid`) or at runtime (`server`) with the island content omitted and a `<script>` tag included in its place.
 
-After the page loads in the browser, the script tag will replace itself with the the contents of the island by making a request.
+After the page loads in the browser, the script tag will replace itself with the contents of the island by making a request.
 
 Any Astro component can be given the `server: defer` attribute to delay its rendering. There is no special API and you can write `.astro` code as normal:
 
@@ -1591,7 +1620,7 @@ When enabled, this feature will generate and add JSON schemas to the `.astro` di
 }
 ```
 
-To use this feature with the Astro VS Code extension, you must also enable the `astro.content-intellisense` option in your VS Code settings. For editors using the Astro language server directly, pass the `contentIntellisense: true` initialization parameter to enable this feature.
+To use this feature with the Astro VS Code extension, you must also enable the `astro.content-intellisense` option in your VS Code settings. For editors using the Astro language server directly, pass the `contentIntellisense: true` initialization parameter to enable this feature. See the [content Intellisense implementation PR](https://github.com/withastro/language-tools/pull/915) for more details about this early feature.
 
 ### experimental.contentLayer
 
@@ -1724,7 +1753,7 @@ const countries = defineCollection({
 export const collections = { countries };
 ```
 
-For more advanced loading logic, you can define an object loader. This allows incremental updates and conditional loading while also giving full access to the data store. See the API in [the Content Layer API RFC](https://github.com/withastro/roadmap/blob/content-layer/proposals/0047-content-layer.md#loaders).
+For more advanced loading logic, you can define an object loader. This allows incremental updates and conditional loading while also giving full access to the data store. See the API in [the Content Layer API RFC](https://github.com/withastro/roadmap/blob/content-layer/proposals/0050-content-layer.md#loaders).
 
 #### Migrating an existing content collection to use the Content Layer API
 
@@ -1789,5 +1818,5 @@ You can convert an existing content collection with Markdown, MDX, Markdoc, or J
 
 #### Learn more
 
-For a complete overview and the full API reference, see [the Content Layer API RFC](https://github.com/withastro/roadmap/blob/content-layer/proposals/0047-content-layer.md) and [share your feedback](https://github.com/withastro/roadmap/pull/982).
+For a complete overview and the full API reference, see [the Content Layer API RFC](https://github.com/withastro/roadmap/blob/content-layer/proposals/0050-content-layer.md) and [share your feedback](https://github.com/withastro/roadmap/pull/982).
 

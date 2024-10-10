@@ -114,7 +114,7 @@ import api from '../db/api.js';
 
 기본적으로 UI 프레임워크 컴포넌트는 클라이언트에서 수화되지 않습니다. `client:*` 지시어가 제공되지 않으면 HTML이 JavaScript 없이 페이지에 렌더링됩니다.
 
-클라이언트 지시어는 `.astro` 컴포넌트로 직접 가져온 UI 프레임워크 컴포넌트에서만 사용할 수 있습니다. [동적 태그](/ko/basics/astro-syntax/#동적-태그)와 [`components` prop을 통해 전달된 사용자 정의 컴포넌트](/ko/guides/markdown-content/#가져온-mdx가-있는-사용자-정의-컴포넌트)를 사용할 때는 수화 지시어가 지원되지 않습니다.
+클라이언트 지시어는 `.astro` 컴포넌트로 직접 가져온 UI 프레임워크 컴포넌트에서만 사용할 수 있습니다. [동적 태그](/ko/basics/astro-syntax/#동적-태그)와 [`components` prop을 통해 전달된 사용자 정의 컴포넌트](/ko/guides/integrations-guide/mdx/#가져온-mdx를-사용하는-사용자-정의-컴포넌트)를 사용할 때는 수화 지시어가 지원되지 않습니다.
 
 ### `client:load`
 
@@ -199,6 +199,16 @@ import api from '../db/api.js';
 <SomeVueComponent client:only="vue" />
 <SomeSolidComponent client:only="solid-js" />
 <SomeLitComponent client:only="lit" />
+```
+
+#### 로딩 콘텐츠 표시
+
+클라이언트에서만 렌더링되는 컴포넌트의 경우 로딩하는 동안 대체 콘텐츠를 표시할 수도 있습니다. 클라이언트 컴포넌트를 사용할 수 있을 때까지만 표시되는 콘텐츠를 만들려면 모든 하위 요소에 `slot="fallback"`을 사용합니다:
+
+```astro {2}
+<ClientComponent client:only="vue">
+  <div slot="fallback">Loading</div>
+</ClientComponent>
 ```
 
 ### 사용자 정의 클라이언트 지시어

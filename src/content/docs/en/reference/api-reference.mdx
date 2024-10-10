@@ -33,7 +33,7 @@ const posts = await Astro.glob('../pages/post/*.md'); // returns an array of pos
 
 `.glob()` only takes one parameter: a relative URL glob of which local files you'd like to import. It’s asynchronous, and returns an array of the exports from matching files.
 
-`.glob()` can't take variables or strings that interpolate them, as they aren't statically analyzable. (See [the troubleshooting guide](/en/guides/troubleshooting/#supported-values) for a workaround.) This is because `Astro.glob()` is a wrapper of Vite's [`import.meta.glob()`](https://vitejs.dev/guide/features.html#glob-import).
+`.glob()` can't take variables or strings that interpolate them, as they aren't statically analyzable. (See [the troubleshooting guide](/en/guides/troubleshooting/#supported-values) for a workaround.) This is because `Astro.glob()` is a wrapper of Vite's [`import.meta.glob()`](https://vite.dev/guide/features.html#glob-import).
 
 :::note
 You can also use `import.meta.glob()` itself in your Astro project. You may want to do this when:
@@ -42,7 +42,7 @@ You can also use `import.meta.glob()` itself in your Astro project. You may want
 - You want access to each file's path. `import.meta.glob()` returns a map of a file's path to its content, while `Astro.glob()` returns a list of content.
 - You want to pass multiple patterns; for example, you want to add a "negative pattern" that filters out certain files. `import.meta.glob()` can optionally take an array of glob strings, rather than a single string.
 
-Read more in the [Vite documentation](https://vitejs.dev/guide/features.html#glob-import).
+Read more in the [Vite documentation](https://vite.dev/guide/features.html#glob-import).
 :::
 #### Markdown Files
 
@@ -134,7 +134,7 @@ import Heading from '../components/Heading.astro';
 <Heading title="My First Post" date="09 Aug 2022" />
 ```
 
-<ReadMore>Learn more about how [Markdown and MDX Layouts](/en/guides/markdown-content/#frontmatter-layout) handle props.</ReadMore>
+<ReadMore>Learn more about how [Markdown and MDX Layouts](/en/guides/markdown-content/#frontmatter-layout-property) handle props.</ReadMore>
 
 <ReadMore>Learn how to add [TypeScript type definitions for your props](/en/guides/typescript/#component-props).</ReadMore>
 
@@ -1116,6 +1116,10 @@ The `getStaticPaths()` function should return an array of objects to determine w
 
 It can also be used in static file endpoints for [dynamic routing](/en/guides/endpoints/#params-and-dynamic-routing).
 
+:::tip
+When using TypeScript, use the [`GetStaticPaths`](/en/guides/typescript/#infer-getstaticpaths-types) type utility to ensure type-safe access of your `params` and `props`.
+:::
+
 :::caution
 The `getStaticPaths()` function executes in its own isolated scope once, before any page loads. Therefore you can't reference anything from its parent scope, other than file imports. The compiler will warn if you break this requirement.
 :::
@@ -1217,17 +1221,24 @@ export async function getStaticPaths({ paginate }) {
 const { page } = Astro.props;
 ```
 
+`paginate()` has the following arguments:
+- `data` - array containing the page’s data passed to the `paginate()` function
+- `options` - Optional object with the following properties:
+  - `pageSize` - The number of items shown per page (`10` by default)
+  - `params` - Send additional parameters for creating dynamic routes
+  - `props` - Send additional props to be available on each page
+
 `paginate()` assumes a file name of `[page].astro` or `[...page].astro`. The `page` param becomes the page number in your URL:
 
 - `/posts/[page].astro` would generate the URLs `/posts/1`, `/posts/2`, `/posts/3`, etc.
 - `/posts/[...page].astro` would generate the URLs `/posts`, `/posts/2`, `/posts/3`, etc.
 
-`paginate()` has the following arguments:
-- `pageSize` - The number of items shown per page (`10` by default)
-- `params` - Send additional parameters for creating dynamic routes
-- `props` - Send additional props to be available on each page
-
 #### The pagination `page` prop
+
+<p>
+
+**Type:** `Page<TData>`
+</p>
 
 Pagination will pass a `page` prop to every rendered page that represents a single page of data in the paginated collection. This includes the data that you've paginated (`page.data`) as well as metadata for the page (`page.url`, `page.start`, `page.end`, `page.total`, etc). This metadata is useful for things like a "Next Page" button or a "Showing 1-10 of 100" message.
 
@@ -1235,10 +1246,10 @@ Pagination will pass a `page` prop to every rendered page that represents a sing
 
 <p>
 
-**Type:** `Array`
+**Type:** `Array<TData>`
 </p>
 
-Array of data returned from `data()` for the current page.
+Array of data returned from the `paginate()` function for the current page.
 
 ##### `page.start`
 
@@ -1344,7 +1355,7 @@ Get the URL of the last page (will be `undefined` if no more pages). If a value 
 
 ## `import.meta`
 
-All ESM modules include a `import.meta` property. Astro adds `import.meta.env` through [Vite](https://vitejs.dev/guide/env-and-mode.html).
+All ESM modules include a `import.meta` property. Astro adds `import.meta.env` through [Vite](https://vite.dev/guide/env-and-mode.html).
 
 **`import.meta.env.SSR`** can be used to know when rendering on the server. Sometimes you might want different logic, like a component that should only be rendered in the client:
 
@@ -1369,7 +1380,7 @@ export default function () {
 
 The `getImage()` function is intended for generating images destined to be used somewhere else than directly in HTML, for example in an [API Route](/en/guides/endpoints/#server-endpoints-api-routes). It also allows you to create your own custom `<Image />` component.
 
-`getImage()` takes an options object with the [same properties as the Image component](#properties) (except `alt`).
+`getImage()` takes an options object with the [same properties as the Image component](/en/reference/components-reference/#properties) (except `alt`).
 
 ```astro
 ---
@@ -1504,7 +1515,7 @@ export const collections = { blog, authors };
 
 <p>
 
-**Type:** `(collection: string, filter?: (entry: CollectionEntry<collection>) => boolean) => CollectionEntry<collection>[]`
+**Type:** `(collection: string, filter?: (entry: CollectionEntry<TCollectionName>) => boolean) => CollectionEntry<TCollectionName>[]`
 </p>
 
 `getCollection()` is a function that retrieves a list of content collection entries by collection name.
@@ -1532,9 +1543,9 @@ const draftBlogPosts = await getCollection('blog', ({ data }) => {
 <p><Since v="2.5.0" /></p>
 
 **Types:**
-- `(collection: string, contentSlugOrDataId: string) => CollectionEntry<collection>`
-- `({ collection: string, id: string }) => CollectionEntry<collection>`
-- `({ collection: string, slug: string }) => CollectionEntry<collection>`
+- `(collection: string, contentSlugOrDataId: string) => CollectionEntry<TCollectionName>`
+- `({ collection: string, id: string }) => CollectionEntry<TCollectionName>`
+- `({ collection: string, slug: string }) => CollectionEntry<TCollectionName>`
 
 `getEntry()` is a function that retrieves a single collection entry by collection name and either the entry `id` (for `type: 'data'` collections) or entry `slug` (for `type: 'content'` collections). `getEntry()` can also be used to get referenced entries to access the `data`, `body`, or `render()` properties:
 
@@ -1560,8 +1571,8 @@ See the `Content Collections` guide for examples of [querying collection entries
 <p><Since v="2.5.0" /></p>
 
 **Types:**
-- `(Array<{ collection: string, id: string }>) => Array<CollectionEntry<collection>>`
-- `(Array<{ collection: string, slug: string }>) => Array<CollectionEntry<collection>>`
+- `(Array<{ collection: string, id: string }>) => CollectionEntry<TCollectionName>[]`
+- `(Array<{ collection: string, slug: string }>) => CollectionEntry<TCollectionName>[]`
 
 `getEntries()` is a function that retrieves multiple collection entries from the same collection. This is useful for [returning an array of referenced entries](/en/guides/content-collections/#defining-collection-references) to access their associated `data`, `body`, and `render()` properties.
 
@@ -1580,7 +1591,7 @@ const enterpriseRelatedPosts = await getEntries(enterprisePost.data.relatedPosts
 
 <p>
 
-**Type:** `(collection: string, slug: string) => Promise<CollectionEntry<collection>>`
+**Type:** `(collection: string, slug: string) => Promise<CollectionEntry<TCollectionName>>`
 </p>
 
 :::caution[Deprecated]
@@ -1604,7 +1615,7 @@ const enterprise = await getEntryBySlug('blog', 'enterprise');
 
 <p>
 
-**Type:** `(collection: string, id: string) => Promise<CollectionEntry<collection>>`<br />
+**Type:** `(collection: string, id: string) => Promise<CollectionEntry<TCollectionName>>`<br />
 <Since v="2.5.0" />
 </p>
 
@@ -1678,7 +1689,7 @@ A string containing the raw, uncompiled body of the Markdown or MDX document.
 A function to compile a given Markdown or MDX document for rendering. This returns the following properties:
 
 - `<Content />` - A component used to render the document's contents in an Astro file.
-- `headings` - A generated list of headings, [mirroring Astro's `getHeadings()` utility](/en/guides/markdown-content/#exported-properties) on Markdown and MDX imports.
+- `headings` - A generated list of headings, [mirroring Astro's `getHeadings()` utility](/en/guides/markdown-content/#available-properties) on Markdown and MDX imports.
 - `remarkPluginFrontmatter ` - The modified frontmatter object after any [remark or rehype plugins have been applied](/en/guides/markdown-content/#modifying-frontmatter-programmatically). Set to type `any`.
 
 ```astro
@@ -2137,6 +2148,350 @@ export const onRequest = defineMiddleware(async (context, next) => {
 })
 ```
 
+## View Transitions client API (`astro:transitions/client`)
+
+<p><Since v="3.2.0" /></p>
+
+This module provides functions to control and interact with the View Transitions API and client-side router.
+
+For features and usage examples, [see our View Transitions guide](/en/guides/view-transitions/).
+
+### `navigate()`
+
+<p>
+
+**Type:** `(href: string, options?: Options) => void`<br />
+<Since v="3.2.0" />
+</p>
+
+A function that executes a navigation to the given `href` using the View Transitions API.
+
+This function signature is based on the [`navigate` function from the browser Navigation API](https://developer.mozilla.org/en-US/docs/Web/API/Navigation/navigate). Although based on the Navigation API, this function is implemented on top of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to allow for navigation without reloading the page.
+
+#### `history` option
+
+<p>
+
+**Type:** `'auto' | 'push' | 'replace'`<br />
+**Default:** `'auto'`<br />
+<Since v="3.2.0" />
+</p>
+
+Defines how this navigation should be added to the browser history.
+
+- `'push'`: the router will use `history.pushState` to create a new entry in the browser history.
+- `'replace'`: the router will use `history.replaceState` to update the URL without adding a new entry into navigation.
+- `'auto'` (default): the router will attempt `history.pushState`, but if the URL cannot be transitioned to, the current URL will remain with no changes to the browser history.
+
+This option follows the [`history` option](https://developer.mozilla.org/en-US/docs/Web/API/Navigation/navigate#history) from the browser Navigation API but simplified for the cases that can happen on an Astro project.
+
+#### `formData` option
+
+<p>
+
+**Type:** `FormData`<br />
+<Since v="3.5.0" />
+</p>
+
+A `FormData` object for `POST` requests.
+
+When this option is provided, the requests to the navigation target page will be sent as a `POST` request with the form data object as the content.
+
+Submitting an HTML form with view transitions enabled will use this method instead of the default navigation with page reload. Calling this method allows triggering the same behavior programmatically.
+
+#### `info` option
+
+<p>
+
+**Type:** `any`<br />
+<Since v="3.6.0" />
+</p>
+
+Arbitrary data to be included in the `astro:before-preparation` and `astro:before-swap` events caused by this navigation.
+
+This option mimics the [`info` option](https://developer.mozilla.org/en-US/docs/Web/API/Navigation/navigate#info) from the browser Navigation API.
+
+#### `state` option
+
+<p>
+
+**Type:** `any`<br />
+<Since v="3.6.0" />
+</p>
+
+Arbitrary data to be associated with the `NavitationHistoryEntry` object created by this navigation. This data can then be retrieved using the [`history.getState` function](https://developer.mozilla.org/en-US/docs/Web/API/NavigationHistoryEntry/getState) from the History API.
+
+This option mimics the [`state` option](https://developer.mozilla.org/en-US/docs/Web/API/Navigation/navigate#state) from the browser Navigation API.
+
+#### `sourceElement` option
+
+<p>
+
+**Type:** `Element`<br />
+<Since v="3.6.0" />
+</p>
+
+The element that triggered this navigation, if any. This element will be available in the following events:
+- `astro:before-preparation`
+- `astro:before-swap`
+
+### `supportsViewTransitions`
+
+<p>
+
+**Type:** `boolean`<br />
+<Since v="3.2.0" />
+</p>
+
+Whether or not view transitions are supported and enabled in the current browser.
+
+### `transitionEnabledOnThisPage`
+
+<p>
+
+**Type:** `boolean`<br />
+<Since v="3.2.0" />
+</p>
+
+Whether or not the current page has view transitions enabled for client-side navigation. This can be used to make components that behave differently when they are used on pages with view transitions.
+
+### `getFallback`
+
+<p>
+
+**Type:** `() => 'none' | 'animate' | 'swap'`<br />
+<Since v="3.6.0" />
+</p>
+
+Returns the fallback strategy to use in browsers that do not support view transitions.
+
+See the guide on [Fallback control](/en/guides/view-transitions/#fallback-control) for how to choose and configure the fallback behavior.
+
+
+### `astro:before-preparation` event
+
+An event dispatched at the beginning of a navigation using View Transitions. This event happens before any request is made and any browser state is changed.
+
+This event has the attributes:
+- [`info`](#info)
+- [`sourceElement`](#sourceelement)
+- [`navigationType`](#navigationtype)
+- [`direction`](#direction)
+- [`from`](#from)
+- [`to`](#to)
+- [`formData`](#formdata)
+- [`loader`](#loader)
+
+Read more about how to use this event on the [View Transitions guide](/en/guides/view-transitions/#astrobefore-preparation).
+
+### `astro:after-preparation` event
+
+An event dispatched after the next page in a navigation using View Transitions is loaded.
+
+This event has no attributes.
+
+Read more about how to use this event on the [View Transitions guide](/en/guides/view-transitions/#astroafter-preparation).
+
+### `astro:before-swap` event
+
+An event dispatched after the next page is parsed, prepared, and linked into a document in preparation for the transition but before any content is swapped between the documents.
+
+This event can't be canceled. Calling `preventDefault()` is a no-op.
+
+This event has the attributes:
+- [`info`](#info)
+- [`sourceElement`](#sourceelement)
+- [`navigationType`](#navigationtype)
+- [`direction`](#direction)
+- [`from`](#from)
+- [`to`](#to)
+- [`viewTransition`](#viewtransition)
+- [`swap`](#swap)
+
+Read more about how to use this event on the [View Transitions guide](/en/guides/view-transitions/#astrobefore-swap).
+
+### `astro:after-swap` event
+
+An event dispatched after the contents of the page have been swapped but before the view transition ends.
+
+The history entry and scroll position have already been updated when this event is triggered.
+
+### `astro:page-load` event
+
+An event dispatched after a page completes loading, whether from a navigation using view transitions or native to the browser.
+
+When view transitions is enabled on the page, code that would normally execute on `DOMContentLoaded` should be changed to execute on this event.
+
+### View Transitions events attributes
+
+<p><Since v="3.6.0" /></p>
+
+#### `info`
+
+<p>
+
+**Type:** `URL`
+</p>
+
+Arbitrary data defined during navigation.
+
+This is the literal value passed on the [`info` option](#info-option) of the [`navigate()` function](#navigate).
+
+#### `sourceElement`
+
+<p>
+
+**Type:** `Element | undefined`
+</p>
+
+The element that triggered the navigation. This can be, for example, an `<a>` element that was clicked.
+
+When using the [`navigate()` function](#navigate), this will be the element specified in the call.
+
+#### `newDocument`
+
+<p>
+
+**Type:** `Document`
+</p>
+
+The document for the next page in the navigation. The contents of this document will be swapped in place of the contents of the current document.
+
+#### `navigationType`
+
+<p>
+
+**Type:** `'push' | 'replace' | 'traverse'`
+</p>
+
+Which kind of history navigation is happening.
+- `push`: a new `NavigationHistoryEntry` is being created for the new page.
+- `replace`: the current `NavigationHistoryEntry` is being replaced with an entry for the new page.
+- `traverse`: no `NavigationHistoryEntry` is created. The position in the history is changing.
+  The direction of the traversal is given on the [`direction` attribute](#direction)
+
+#### `direction`
+
+<p>
+
+**Type:** `Direction`
+</p>
+
+The direction of the transition.
+- `forward`: navigating to the next page in the history or to a new page.
+- `back`: navigating to the previous page in the history.
+- Anything else some other listener might have set.
+
+#### `from`
+
+<p>
+
+**Type:** `URL`
+</p>
+
+The URL of the page initiating the navigation.
+
+#### `to`
+
+<p>
+
+**Type:** `URL`
+</p>
+
+The URL of the page being navigated to. This property can be modified, the value at the end of the lifecycle will be used in the `NavigationHistoryEntry` for the next page.
+
+#### `formData`
+
+<p>
+
+**Type:** `FormData | undefined`
+</p>
+
+A `FormData` object for `POST` requests.
+
+When this attribute is set, a `POST` request will be sent to the [`to` URL](#to) with the given form data object as the content instead of the normal `GET` request.
+
+When submitting an HTML form with view transitions enabled, this field is automatically set to the data in the form. When using the [`navigate()` function](#navigate), this value is the same as given in the options.
+
+#### `loader`
+
+<p>
+
+**Type:** `() => Promise<void>`
+</p>
+
+Implementation of the following phase in the navigation (loading the next page). This implementation can be overridden to add extra behavior.
+
+#### `viewTransition`
+
+<p>
+
+**Type:** [`ViewTransition`](https://developer.mozilla.org/en-US/docs/Web/API/ViewTransition)
+</p>
+
+The view transition object used in this navigation. On browsers that do not support the [View Transitions API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API), this is an object implementing the same API for convenience but without the DOM integration.
+
+#### `swap`
+
+<p>
+
+**Type:** `() => void`
+</p>
+
+Implementation of the document swap logic. 
+
+Read more on how to [build your own custom swap function](/en/guides/view-transitions/#building-a-custom-swap-function) on the View Transitions guide.
+
+By default, this implementation will call the following functions in order:
+
+##### `deselectScripts()`
+
+<p>
+
+**Type:** `(newDocument: Document) => void`
+</p>
+
+Marks scripts in the new document that should not be executed. Those scripts are already in the current document and are not flagged for re-execution using [`data-astro-rerun`](/en/guides/view-transitions/#data-astro-rerun).
+
+##### `swapRootAttributes()`
+
+<p>
+
+**Type:** `(newDocument: Document) => void`
+</p>
+
+Swaps the attributes between the document roots, like the `lang` attribute. This also includes Astro-injected internal attributes like `data-astro-transition`, which makes the transition direction available to Astro-generated CSS rules.
+
+When making a custom swap function, it is important to call this function so as not to break the view transition's animations.
+
+##### `swapHeadElements()`
+
+<p>
+
+**Type:** `(newDocument: Document) => void`
+</p>
+
+Removes every element from the current document's `<head>` that is not persisted to the new document. Then appends all new elements from the new document's `<head>` to the current document's `<head>`.
+
+##### `saveFocus()`
+
+<p>
+
+**Type:** `() => () => void`
+</p>
+
+Stores the element in focus on the current page and returns a function that when called, if the focused element was persisted, returns the focus to it.
+
+
+##### `swapBodyElements()`
+
+<p>
+
+**Type:** `(newBody: Element, oldBody: Element) => void`
+</p>
+
+Replaces the old body with the new body. Then, goes through every element in the old body that should be persisted and have a matching element in the new body and swaps the old element back in place.
+
 ## Actions (`astro:actions`)
 
 <p>
@@ -2151,15 +2506,15 @@ Actions help you build a type-safe backend you can call from client code and HTM
 <Since v="4.15.0" />
 </p>
 
-The `defineAction()` utility is used to define new actions from the `src/actions/index.ts` file. This accepts a `handler()` function containing the server logic to run, and an optional `input` property to validate input parameters at runtime.
+The `defineAction()` utility is used to define new actions from the `src/actions/index.ts` file. This accepts a [`handler()`](#handler-property) function containing the server logic to run, and an optional [`input`](#input-validator) property to validate input parameters at runtime.
 
 ```ts
 export const server = {
-    getGreeting: defineAction({
+  getGreeting: defineAction({
     input: z.object({
       name: z.string(),
     }),
-    handler: async (input) => {
+    handler: async (input, context) => {
       return `Hello, ${input.name}!`
     }
   })
@@ -2169,30 +2524,73 @@ export const server = {
 #### `handler()` property
 
 <p>
-<Since v="4.15.0" />
+
+**Type:** `(input, context) => any`
 </p>
 
-`defineAction()` accepts a `handler()` function containing the server logic to run when the action is called. This function can return data that is automatically serialized and sent to the caller.
+`defineAction()` requires a `handler()` function containing the server logic to run when the action is called. Data returned from the handler is automatically serialized and sent to the caller.
 
-Return values are parsed using the [devalue library](https://github.com/Rich-Harris/devalue). This supports JSON values, along with instances of `Date()`, `Map()`, `Set()`, or `URL()`.
+The `handler()` is called with user input as its first argument. If an [`input`](#input-validator) validator is set, the user input will be validated before being passed to the handler. The second argument is a `context` object containing most of Astro’s [standard endpoint context](#endpoint-context), excluding  `getActionResult()`, `callAction()`, and `redirect()`.
+
+Return values are parsed using the [devalue library](https://github.com/Rich-Harris/devalue). This supports JSON values and instances of `Date()`, `Map()`, `Set()`, and `URL()`.
 
 #### `input` validator
 
 <p>
-<Since v="4.15.0" />
+
+**Type:** `ZodType | undefined`
 </p>
 
 The optional `input` property accepts a Zod validator to validate handler inputs at runtime. If the action fails to validate, [a `BAD_REQUEST` error](#actionerror) is returned and the `handler` is not called.
 
-If used with `accept: 'form'`, `input` must use the `z.object()` validator.
+If `input` is omitted, the `handler` will receive an input of type `unknown` for JSON requests and type `FormData` for form requests.
 
-Extension functions including `.refine()`, `.transform()`, and `.pipe()` are also supported on this object. The following validators are supported for form data fields:
+##### Use with `accept: 'form'`
+
+If your action accepts form inputs, use the `z.object()` validator to automatically parse form data to a typed object. The following validators are supported for form data fields:
 
 - Inputs of type `number` can be validated using `z.number()`
 - Inputs of type `checkbox` can be validated using `z.boolean()`
 - Inputs of type `file` can be validated using `z.instanceof(File)`
 - Multiple inputs of the same `name` can be validated using `z.array(/* validator */)`
 - All other inputs can be validated using `z.string()`
+
+Extension functions including `.refine()`, `.transform()`, and `.pipe()` are also supported on the `z.object()` validator.
+
+To apply a union of different validators, use the `z.discriminatedUnion()` wrapper to narrow the type based on a specific form field. This example accepts a form submission to either "create" or "update" a user, using the form field with the name `type` to determine which object to validate against:
+
+```ts
+import { defineAction } from 'astro:actions';
+import { z } from 'astro:schema';
+
+export const server = {
+  changeUser: defineAction({
+    accept: 'form',
+    input: z.discriminatedUnion('type', [
+      z.object({
+        // Matches when the `type` field has the value `create`
+        type: z.literal('create'),
+        name: z.string(),
+        email: z.string().email(),
+      }),
+      z.object({
+        // Matches when the `type` field has the value `update`
+        type: z.literal('update'),
+        id: z.number(),
+        name: z.string(),
+        email: z.string().email(),
+      }),
+    ]),
+    async handler(input) {
+      if (input.type === 'create') {
+        // input is { type: 'create', name: string, email: string }
+      } else {
+        // input is { type: 'update', id: number, name: string, email: string }
+      }
+    },
+  }),
+};
+```
 
 ### `isInputError()`
 
@@ -2248,262 +2646,5 @@ The `code` property accepts human-readable versions of all HTTP status codes. Th
 </p>
 
 The `message` property accepts a string. (e.g. "User must be logged in.")
-
-## Built-in Components
-
-Astro includes several built-in components for you to use in your projects. All built-in components are available in `.astro` files via `import {} from 'astro:components';`.
-
-You can reference the `Props` of these components using the [`ComponentProp` type](/en/guides/typescript/#componentprops-type) utility.
-
-### `<Code />`
-
-```astro 'theme="dark-plus"' /wrap\b/ /(inline) \/>/
----
-import { Code } from 'astro:components';
----
-<!-- Syntax highlight some JavaScript code. -->
-<Code code={`const foo = 'bar';`} lang="js" />
-<!-- Optional: Customize your theme. -->
-<Code code={`const foo = 'bar';`} lang="js" theme="dark-plus" />
-<!-- Optional: Enable word wrapping. -->
-<Code code={`const foo = 'bar';`} lang="js" wrap />
-<!-- Optional: Output inline code. -->
-<p>
-  <Code code={`const foo = 'bar';`} lang="js" inline />
-  will be rendered inline.
-</p>
-<!-- Optional: defaultColor -->
-<Code code={`const foo = 'bar';`} lang="js" defaultColor={false} />
-```
-
-This component provides syntax highlighting for code blocks at build time (no client-side JavaScript included). The component is powered internally by Shiki and it supports all popular [themes](https://shiki.style/themes) and [languages](https://shiki.style/languages). Plus, you can add your custom themes, languages, [transformers](#transformers), and [default colors](https://shiki.style/guide/dual-themes#without-default-color) by passing them to the `theme`, `lang`, `transformers`, and `defaultColor` attributes respectively.
-
-:::note
-This component **does not** inherit the settings from your [Shiki configuration](/en/guides/markdown-content/#shiki-configuration). You will have to set them using the component props.
-:::
-
-#### Transformers
-
-<p><Since v="4.11.0" /></p>
-
-[Shiki transformers](https://shiki.style/packages/transformers#shikijs-transformers) can optionally be applied to code by passing them in through the `transformers` property as an array. Since Astro v4.14.0, you can also provide a string for [Shiki's `meta` attribute](https://shiki.style/guide/transformers#meta) to pass options to transformers.
-
-Note that `transformers` only applies classes and you must provide your own CSS rules to target the elements of your code block.
-
-```astro title="src/pages/index.astro" {12-13}
----
-import { transformerNotationFocus, transformerMetaHighlight } from '@shikijs/transformers'
-import { Code } from 'astro:components'
-const code = `const foo = 'hello'
-const bar = ' world'
-console.log(foo + bar) // [!code focus]
-`
----
-<Code
-  code={code}
-  lang="js"
-  transformers={[transformerMetaHighlight()]}
-  meta="{1,3}" />
-  
-  <style is:global>
-    pre.has-focused .line:not(.focused) {
-      filter: blur(1px);
-    }
-  </style>
-```
-
-### `<Fragment />`
-
-A component used with [`set:*` directives](/en/reference/directives-reference/#sethtml) to render HTML content without any additional wrapping elements:
-
-```astro title="src/components/SetHtml.astro" "Fragment"
----
-const htmlString = '<p>Raw HTML content</p>';
----
-<Fragment set:html={htmlString} />
-```
-
-See more about [using fragments](/en/basics/astro-syntax/#fragments) in Astro syntax.
-
-### `<Prism />`
-
-To use the `Prism` highlighter component, first **install** the `@astrojs/prism` package:
-
-<PackageManagerTabs>
-  <Fragment slot="npm">
-  ```shell
-  npm install @astrojs/prism
-  ```
-  </Fragment>
-  <Fragment slot="pnpm">
-  ```shell
-  pnpm add @astrojs/prism
-  ```
-  </Fragment>
-  <Fragment slot="yarn">
-  ```shell
-  yarn add @astrojs/prism
-  ```
-  </Fragment>
-</PackageManagerTabs>
-
-```astro
----
-import { Prism } from '@astrojs/prism';
----
-<Prism lang="js" code={`const foo = 'bar';`} />
-```
-
-This component provides language-specific syntax highlighting for code blocks by applying Prism's CSS classes. Note that **you need to provide a Prism CSS stylesheet** (or bring your own) for syntax highlighting to appear! See the [Prism configuration section](/en/guides/markdown-content/#prism-configuration) for more details.
-
-See the [list of languages supported by Prism](https://prismjs.com/#supported-languages) where you can find a language’s corresponding alias. And, you can also display your Astro code blocks with `lang="astro"`!
-
-### `<Image />`
-
-```astro title="src/components/MyComponent.astro"
----
-// import the Image component and the image
-import { Image } from 'astro:assets';
-import myImage from "../assets/my_image.png"; // Image is 1600x900
----
-
-<!-- `alt` is mandatory on the Image component -->
-<Image src={myImage} alt="A description of my image." />
-```
-
-```html
-<!-- Output -->
-<!-- Image is optimized, proper attributes are enforced -->
-<img
-  src="/_astro/my_image.hash.webp"
-  width="1600"
-  height="900"
-  decoding="async"
-  loading="lazy"
-  alt="A description of my image."
-/>
-```
-#### Properties
-
-- src (required)
-- alt (required)
-- width and height (required for `public/` and remote images)
-- format
-- quality
-- densities
-- widths
-
-In addition to the properties above, the `<Image />` component accepts all properties accepted by the HTML `<img>` tag.
-
-See more in the [Images Guide](/en/guides/images/#image--astroassets).
-
-### `<Picture />`
-
-<p><Since v="3.3.0" /></p>
-
-Use the built-in `<Picture />` Astro component to display a responsive image with multiple formats and/or sizes.
-
-```astro title="src/pages/index.astro"
----
-import { Picture } from 'astro:assets';
-import myImage from "../assets/my_image.png"; // Image is 1600x900
----
-
-<!-- `alt` is mandatory on the Picture component -->
-<Picture src={myImage} formats={['avif', 'webp']} alt="A description of my image." />
-```
-
-```html
-<!-- Output -->
-<picture>
-  <source srcset="/_astro/my_image.hash.avif" type="image/avif" />
-  <source srcset="/_astro/my_image.hash.webp" type="image/webp" />
-  <img
-    src="/_astro/my_image.hash.png"
-    width="1600"
-    height="900"
-    decoding="async"
-    loading="lazy"
-    alt="A description of my image."
-  />
-</picture>
-```
-
-See more in the [Images Guide](/en/guides/images/#picture-).
-
-#### Properties
-
-`<Picture />` accepts all the properties of the `<Image />` component, plus the following:
-
-##### `formats`
-
-An array of image formats to use for the `<source>` tags. By default, this is set to `['webp']`.
-
-##### `fallbackFormat`
-
-Format to use as a fallback value for the `<img>` tag. Defaults to `.png` for static images, `.gif` for animated images, and `.svg` for SVG files.
-
-##### `pictureAttributes`
-
-An object of attributes to be added to the `<picture>` tag. Use this property to apply attributes to the outer `<picture>` element itself. Attributes applied to the `<Picture />` component directly will apply to the inner `<img>` element, except for those used for image transformation.
-
-
-### `<Content />`
-
-A generic component used to render the content of a [content collection entry](/en/guides/content-collections/#what-are-content-collections).
-
-First, query one or more entries using `getCollection()` or `getEntry()`. Then, the `entry.render()` function can return the `<Content />` component for use in a `.astro` file template.
-
-```astro title="src/pages/render-example.astro" {4, 7}
----
-import { getEntry } from 'astro:content';
-const entry = await getEntry('blog', 'post-1');
-const { Content } = await entry.render();
----
-<p>Published on: {entry.data.published.toDateString()}</p>
-<Content />
-```
-
-### `<ViewTransitions />`
-
-<p><Since v="2.9.0" /></p>
-
-Opt in to using view transitions on individual pages by importing and adding the `<ViewTransitions />` routing component to `<head>` on every desired page.
-
-```astro title="src/pages/index.astro" ins={2,7}
----
-import { ViewTransitions } from 'astro:transitions';
----
-<html lang="en">
-  <head>
-    <title>My Homepage</title>
-    <ViewTransitions />
-  </head>
-  <body>
-    <h1>Welcome to my website!</h1>
-  </body>
-</html>
-```
-
-See more about how to [control the router](/en/guides/view-transitions/#router-control) and [add transition directives](/en/guides/view-transitions/#transition-directives) to page elements and components.
-
-### `<Debug />`
-
-```astro
----
-import { Debug } from 'astro:components';
-const serverObject = {
-  a: 0,
-  b: "string",
-  c: {
-    nested: "object"
-  }
-}
----
-<Debug {serverObject} />
-```
-
-This component provides a way to inspect values on the client-side, without any JavaScript.
-
 
 [canonical]: https://en.wikipedia.org/wiki/Canonical_link_element
